@@ -13,10 +13,9 @@ namespace Inedo.BuildMasterExtensions.Mercurial
         private SourceControlFileFolderPicker exePath;
         private ValidatingTextBox txtTagUser;
 
-
         public override void BindToForm(ProviderBase extension)
         {
-            EnsureChildControls();
+            this.EnsureChildControls();
 
             var provider = (MercurialProvider)extension;
             this.exePath.Text = provider.HgExecutablePath;
@@ -25,9 +24,9 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         public override ProviderBase CreateFromForm()
         {
-            EnsureChildControls();
+            this.EnsureChildControls();
 
-            var provider = new MercurialProvider()
+            var provider = new MercurialProvider
             {
                 HgExecutablePath = this.exePath.Text,
                 CommittingUser = this.txtTagUser.Text
@@ -46,9 +45,9 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             };
 
 
-            this.txtTagUser = new ValidatingTextBox() { Width = 300 };
+            this.txtTagUser = new ValidatingTextBox { Width = 300 };
 
-            CUtil.Add(this,
+            this.Controls.Add(
                  new FormFieldGroup("Mercurial Username",
                      "The username used for tagging builds.",
                      false,

@@ -17,7 +17,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
     /// </summary>
     [ProviderProperties("Mercurial", "Supports Mercurial 1.4 and later; requires Mercurial to be installed.")]
     [CustomEditor(typeof(MercurialProviderEditor))]
-    public sealed class MercurialProvider : MultipleRepositoryProviderBase<MercurialRepository>, IVersioningProvider, IRevisionProvider
+    public sealed class MercurialProvider : SourceControlProviderBase, IMultipleRepositoryProvider<MercurialRepository>, ILabelingProvider, IRevisionProvider
     {
         #region HgCommands Static Class
         /// <summary>
@@ -458,7 +458,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
         /// <returns>
         /// A representation of the current revision in source control
         /// </returns>
-        public byte[] GetCurrentRevision(string path)
+        public object GetCurrentRevision(string path)
         {
             var mercurialPath = new MercurialPath(this, path);
             if (mercurialPath.Repository == null)
@@ -583,6 +583,20 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             {
                 if (!entry.Name.StartsWith(".hg"))
                     yield return entry;
+            }
+        }
+
+        public MercurialRepository[] Repositories { get; set; }
+
+        RepositoryBase[] IMultipleRepositoryProvider.Repositories
+        {
+            get
+            {
+                return this.Repositories;
+            }
+            set
+            {
+                this.Repositories = Array.ConvertAll(value ?? new RepositoryBase[0], r => (MercurialRepository)r);
             }
         }
     }
