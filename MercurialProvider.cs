@@ -467,15 +467,15 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             UpdateLocalRepo(mercurialPath.Repository);
             var res = ExecuteHgCommand(mercurialPath.Repository, HgCommands.log, "-l", "1", "\"" + mercurialPath.RelativePath + "\"");
 
-            var resList = res.Split(new[] { '\n', '\r' }, 1, StringSplitOptions.RemoveEmptyEntries);
+            var resList = res.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             var rev = new byte[6];
             if (resList.Length == 0)
                 return rev;
 
             var line = resList[0];
 
-            int startIndex = line.LastIndexOf(':');
-            if (startIndex == -1)
+            int startIndex = line.LastIndexOf(':') + 1;
+            if (startIndex == 0)
                 return rev;
 
             for (int i = 0; i < rev.Length; i++)
