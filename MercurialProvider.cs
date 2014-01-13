@@ -468,20 +468,11 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             var res = ExecuteHgCommand(mercurialPath.Repository, HgCommands.log, "-l", "1", "\"" + mercurialPath.RelativePath + "\"");
 
             var resList = res.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            var rev = new byte[6];
+
             if (resList.Length == 0)
-                return rev;
+                return string.Empty;
 
-            var line = resList[0];
-
-            int startIndex = line.LastIndexOf(':') + 1;
-            if (startIndex == 0)
-                return rev;
-
-            for (int i = 0; i < rev.Length; i++)
-                rev[i] = byte.Parse(line.Substring(startIndex + i * 2, 2), NumberStyles.HexNumber);
-
-            return rev;
+            return resList[0];
         }
         #endregion
 
