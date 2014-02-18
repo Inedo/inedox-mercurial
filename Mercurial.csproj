@@ -85,6 +85,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MercurialPath.cs" />
     <Compile Include="MercurialProvider.cs" />
     <Compile Include="MercurialProviderEditor.cs">
       <SubType>ASPXCodeBehind</SubType>

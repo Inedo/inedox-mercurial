@@ -7,15 +7,16 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 {
     internal sealed class MercurialRepositoryEditor : RepositoryEditorBase
     {
-        SourceControlFileFolderPicker txtRepositoryPath;
-        ValidatingTextBox txtRemoteRepoPath;
+        private SourceControlFileFolderPicker txtRepositoryPath;
+        private ValidatingTextBox txtRemoteRepoPath;
 
         protected override void CreateChildControls()
         {
             this.txtRepositoryPath = new SourceControlFileFolderPicker()
             {
                 DisplayMode = SourceControlBrowser.DisplayModes.Folders,
-                Required = true
+                Required = false,
+                DefaultText = "Managed by BuildMaster"
             };
             this.txtRepositoryPath.PreRender += (s,e) =>
             { 
@@ -25,8 +26,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
             this.txtRemoteRepoPath = new ValidatingTextBox() { Width = 300 };
 
-
-            CUtil.Add(this,
+            this.Controls.Add(
                 new StandardFormField(
                     "Local Repository:",
                     this.txtRepositoryPath),

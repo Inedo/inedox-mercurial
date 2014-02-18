@@ -10,7 +10,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
     /// </summary>
     internal sealed class MercurialProviderEditor : ProviderEditorBase
     {
-        private SourceControlFileFolderPicker exePath;
+        private SourceControlFileFolderPicker txtExePath;
         private ValidatingTextBox txtTagUser;
 
         public override void BindToForm(ProviderBase extension)
@@ -18,7 +18,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             this.EnsureChildControls();
 
             var provider = (MercurialProvider)extension;
-            this.exePath.Text = provider.HgExecutablePath;
+            this.txtExePath.Text = provider.HgExecutablePath;
             this.txtTagUser.Text = provider.CommittingUser;
         }
 
@@ -28,7 +28,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
             var provider = new MercurialProvider
             {
-                HgExecutablePath = this.exePath.Text,
+                HgExecutablePath = this.txtExePath.Text,
                 CommittingUser = this.txtTagUser.Text
             };
 
@@ -37,7 +37,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         protected override void CreateChildControls()
         {
-            this.exePath = new SourceControlFileFolderPicker
+            this.txtExePath = new SourceControlFileFolderPicker
             {
                 DisplayMode = SourceControlBrowser.DisplayModes.FoldersAndFiles,
                 ServerId = this.EditorContext.ServerId,
@@ -45,7 +45,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             };
 
 
-            this.txtTagUser = new ValidatingTextBox { Width = 300 };
+            this.txtTagUser = new ValidatingTextBox { Width = 300, DefaultText = "Local repository default" };
 
             this.Controls.Add(
                  new FormFieldGroup("Mercurial Username",
@@ -56,7 +56,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
                  new FormFieldGroup("Mercurial Exe Path",
                      "The executable path for hg (hg.exe on Windows).",
                      false,
-                     new StandardFormField("Path:", this.exePath)
+                     new StandardFormField("Path:", this.txtExePath)
                      )
                 );
         }
