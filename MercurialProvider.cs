@@ -209,7 +209,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
                 throw new ArgumentException("Path must specify a Mercurial repository.");
 
             UpdateLocalRepo(mercurialPath.Repository, mercurialPath.Branch);
-            var res = ExecuteHgCommand(mercurialPath.Repository, "log", "-l", "1", "\"" + mercurialPath.RelativePath + "\"");
+            var res = ExecuteHgCommand(mercurialPath.Repository, "log -r \"branch('default') and reverse(not(desc('Added tag ') and file(.hgtags)))\" -l1 --template \"{node}\"");
 
             if (!res.Output.Any())
                 return string.Empty;
