@@ -17,7 +17,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
     /// </summary>
     [ProviderProperties("Mercurial", "Supports Mercurial 1.4 and later; requires Mercurial to be installed.")]
     [CustomEditor(typeof(MercurialProviderEditor))]
-    public sealed class MercurialProvider : SourceControlProviderBase, IMultipleRepositoryProvider<MercurialRepository>, ILabelingProvider, IRevisionProvider
+    public sealed class MercurialProvider : DistributedSourceControlProviderBase
     {
         /// <summary>
         /// Gets or sets the path on disk to the hg executable (hg.exe on Windows)
@@ -40,106 +40,70 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             get { return '/'; }
         }
 
-        public override void GetLatest(string sourcePath, string targetPath)
-        {
-            if (targetPath == null) throw new ArgumentNullException("targetPath");
-            var hgSourcePath = new MercurialPath(this, sourcePath);
-            if (hgSourcePath.Repository == null) throw new ArgumentException(sourcePath + " does not represent a valid Mercurial path.", "sourcePath");
-
-            UpdateLocalRepo(hgSourcePath.Repository, hgSourcePath.Branch);
-            CopyNonHgFiles(hgSourcePath.PathOnDisk, targetPath);
-        }
-
         public override DirectoryEntryInfo GetDirectoryEntryInfo(string sourcePath)
         {
-            return GetDirectoryEntryInfo(new MercurialPath(this, sourcePath));
+            var context = (MercurialContext)this.CreateSourceControlContext(sourcePath);
+            return this.GetDirectoryEntryInfo(context);
         }
 
-        private DirectoryEntryInfo GetDirectoryEntryInfo(MercurialPath path)
+        private DirectoryEntryInfo GetDirectoryEntryInfo(MercurialContext context)
         {
-            if (path.Repository == null)
+            if (context.Repository == null)
             {
                 return new DirectoryEntryInfo(
                     string.Empty,
                     string.Empty,
-                    this.Repositories.Select(repo => new DirectoryEntryInfo(repo.RepositoryName, repo.RepositoryName, null, null)).ToArray(),
+                    this.Repositories.Select(repo => new DirectoryEntryInfo(repo.Name, repo.Name, null, null)).ToArray(),
                     null
                 );
             }
-            else if (path.PathSpecifiedBranch == null)
+            else if (context.PathSpecifiedBranch == null)
             {
-                this.EnsureRepoIsPresent(path.Repository);
+                this.EnsureLocalWorkspace(context);
 
                 return new DirectoryEntryInfo(
-                    path.Repository.RepositoryName,
-                    path.Repository.RepositoryName,
-                    this.EnumBranches(path.Repository)
-                        .Select(branch => new DirectoryEntryInfo(branch, MercurialPath.BuildSourcePath(path.Repository.RepositoryName, branch, null), null, null))
+                    context.Repository.Name,
+                    context.Repository.Name,
+                    this.EnumerateBranches(context)
+                        .Select(branch => new DirectoryEntryInfo(branch, MercurialContext.BuildSourcePath(context.Repository.Name, branch, null), null, null))
                         .ToArray(),
                     null
                 );
             }
             else
             {
-                this.EnsureRepoIsPresent(path.Repository);
-                this.UpdateLocalRepo(path.Repository, path.Branch);
+                this.EnsureLocalWorkspace(context);
+                this.UpdateLocalWorkspace(context);
 
                 var de = this.Agent.GetDirectoryEntry(new GetDirectoryEntryCommand()
                 {
-                    Path = path.PathOnDisk,
+                    Path = context.WorkspaceDiskPath,
                     Recurse = false,
                     IncludeRootPath = false
                 }).Entry;
 
                 var subDirs = de.SubDirectories
                     .Where(entry => !entry.Name.StartsWith(".hg"))
-                    .Select(subdir => new DirectoryEntryInfo(subdir.Name, MercurialPath.BuildSourcePath(path.Repository.RepositoryName, path.PathSpecifiedBranch, subdir.Path.Replace('\\', '/')), null, null))
+                    .Select(subdir => new DirectoryEntryInfo(subdir.Name, MercurialContext.BuildSourcePath(context.Repository.Name, context.PathSpecifiedBranch, subdir.Path.Replace('\\', '/')), null, null))
                     .ToArray();
 
                 var files = de.Files
-                    .Select(file => new FileEntryInfo(file.Name, MercurialPath.BuildSourcePath(path.Repository.RepositoryName, path.PathSpecifiedBranch, file.Path.Replace('\\', '/'))))
+                    .Select(file => new FileEntryInfo(file.Name, MercurialContext.BuildSourcePath(context.Repository.Name, context.PathSpecifiedBranch, file.Path.Replace('\\', '/'))))
                     .ToArray();
 
                 return new DirectoryEntryInfo(
                     de.Name,
-                    path.ToString(),
+                    context.ToLegacyPathString(),
                     subDirs,
                     files
                 );
             }
         }
 
-        private IEnumerable<string> EnumBranches(MercurialRepository repo)
-        {
-            if (repo.IsManagedByBuildMaster)
-                this.EnsureRepoIsPresent(repo);
-
-            if (!string.IsNullOrEmpty(repo.RemoteRepositoryUrl))
-                this.ExecuteHgCommand(repo, "pull", repo.RemoteRepositoryUrl);
-
-            var result = this.ExecuteHgCommand(repo, "heads", "--template \"{branch}\\r\\n\"");
-            if (result.ExitCode != 0)
-                throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
-
-            return result.Output;
-        }
-
-        private void EnsureRepoIsPresent(MercurialRepository repo)
-        {
-            var repoPath = repo.GetFullRepositoryPath(this.Agent);
-            if (!this.Agent.DirectoryExists(repoPath) || !this.Agent.DirectoryExists(this.Agent.CombinePath(repoPath, ".hg")))
-            {
-                this.Agent.CreateDirectory(repoPath);
-                this.CloneRepo(repo);
-            }
-        }
-
         public override byte[] GetFileContents(string filePath)
         {
-            var hgSourcePath = new MercurialPath(this, filePath);
-            if (hgSourcePath.Repository == null) throw new ArgumentException(filePath + " does not represent a valid Mercurial path.", "filePath");
-
-            return File.ReadAllBytes(hgSourcePath.PathOnDisk);
+            var context = this.CreateSourceControlContext(filePath);
+            return this.Agent.ReadFileBytes(context.WorkspaceDiskPath);
         }
 
         public override bool IsAvailable()
@@ -149,14 +113,14 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         public override void ValidateConnection()
         {
-            foreach (MercurialRepository repo in Repositories)
+            foreach (var repo in this.Repositories)
             {
-                if (repo.IsManagedByBuildMaster && !this.Agent.DirectoryExists(repo.GetFullRepositoryPath(this.Agent)))
+                if (!this.Agent.DirectoryExists(repo.GetDiskPath(this.Agent)))
                 {
                     // create repo directory and clone repo without checking out the files
-                    this.Agent.CreateDirectory(repo.GetFullRepositoryPath(this.Agent));
+                    this.Agent.CreateDirectory(repo.GetDiskPath(this.Agent));
                     this.ExecuteHgCommand(repo, "init");
-                    this.ExecuteHgCommand(repo, "pull", repo.RemoteRepositoryUrl);
+                    this.ExecuteHgCommand(repo, "pull", repo.RemoteUrl);
                 }
 
                 this.ExecuteHgCommand(repo, "manifest");
@@ -166,50 +130,70 @@ namespace Inedo.BuildMasterExtensions.Mercurial
         public override string ToString()
         {
             if (Repositories.Length == 1)
-                return "Mercurial at " + Util.CoalesceStr(Repositories[0].RemoteRepositoryUrl, Repositories[0].RepositoryPath);
+                return "Mercurial at " + Util.CoalesceStr(Repositories[0].RemoteUrl, Repositories[0].CustomDiskPath);
             else
                 return "Mercurial";
         }
 
-        public void ApplyLabel(string label, string sourcePath)
+        public override void ApplyLabel(string label, SourceControlContext context)
         {
-            if (string.IsNullOrEmpty(label)) throw new ArgumentNullException("label");
-            var hgSourcePath = new MercurialPath(this, sourcePath);
-            if (hgSourcePath.Repository == null) throw new ArgumentException(sourcePath + " does not represent a valid Mercurial path.", "sourcePath");
+            if (string.IsNullOrEmpty(label))
+                throw new ArgumentNullException("label");
 
-            UpdateLocalRepo(hgSourcePath.Repository, hgSourcePath.Branch);
+            if (context.Repository == null) 
+                throw new ArgumentException(context.ToLegacyPathString() + " does not represent a valid Mercurial path.", "context");
 
-            ExecuteHgCommand(
-                hgSourcePath.Repository,
+            this.UpdateLocalWorkspace(context);
+
+            this.ExecuteHgCommand(
+                context.Repository,
                 "tag",
                 "-u \"" + Util.CoalesceStr(this.CommittingUser, "SYSTEM") + "\"",
                 label);
 
-            if (!string.IsNullOrEmpty(hgSourcePath.Repository.RemoteRepositoryUrl))
-                ExecuteHgCommand(hgSourcePath.Repository, "push", hgSourcePath.Repository.RemoteRepositoryUrl);
+            if (!string.IsNullOrEmpty(context.Repository.RemoteUrl))
+                this.ExecuteHgCommand(context.Repository, "push", context.Repository.RemoteUrl);
         }
 
-        public void GetLabeled(string label, string sourcePath, string targetPath)
+        public override SourceControlContext CreateSourceControlContext(object contextData)
         {
-            if (string.IsNullOrEmpty(label)) throw new ArgumentNullException("label");
-            if (string.IsNullOrEmpty(targetPath)) throw new ArgumentNullException("targetPath");
-            var hgSourcePath = new MercurialPath(this, sourcePath);
-            if (hgSourcePath.Repository == null) throw new ArgumentException(sourcePath + " does not represent a valid Mercurial path.", "sourcePath");
-
-            UpdateLocalRepo(hgSourcePath.Repository, hgSourcePath.Branch);
-
-            ExecuteHgCommand(hgSourcePath.Repository, "update", "-r \"" + label + "\"");
-            CopyNonHgFiles(hgSourcePath.PathOnDisk, targetPath);
+            return new MercurialContext(this, (string)contextData);
         }
 
-        public object GetCurrentRevision(string path)
+        public override void EnsureLocalWorkspace(SourceControlContext context)
         {
-            var mercurialPath = new MercurialPath(this, path);
-            if (mercurialPath.Repository == null)
+            var repoPath = context.Repository.GetDiskPath(this.Agent);
+            if (!this.Agent.DirectoryExists(repoPath) || !this.Agent.DirectoryExists(this.Agent.CombinePath(repoPath, ".hg")))
+            {
+                this.Agent.CreateDirectory(repoPath);
+                this.Clone(context);
+            }
+        }
+
+        public override IEnumerable<string> EnumerateBranches(SourceControlContext context)
+        {
+            this.EnsureLocalWorkspace(context);
+            this.UpdateLocalWorkspace(context);            
+
+            var result = this.ExecuteHgCommand(context.Repository, "heads", "--template \"{branch}\\r\\n\"");
+            if (result.ExitCode != 0)
+                throw new InvalidOperationException(Util.CoalesceStr(string.Join(Environment.NewLine, result.Error), "Exit code was nonzero: " + result.ExitCode));
+
+            return result.Output;
+        }
+
+        public override void ExportFiles(SourceControlContext context, string targetDirectory)
+        {
+            this.ExecuteHgCommand(context.Repository, "archive", "\"" + targetDirectory + "\" -X \".hg*\"");
+        }
+
+        public override object GetCurrentRevision(SourceControlContext context)
+        {
+            if (context.Repository == null)
                 throw new ArgumentException("Path must specify a Mercurial repository.");
 
-            UpdateLocalRepo(mercurialPath.Repository, mercurialPath.Branch);
-            var res = ExecuteHgCommand(mercurialPath.Repository, "log -r \"branch('default') and reverse(not(desc('Added tag ') and file(.hgtags)))\" -l1 --template \"{node}\"");
+            this.UpdateLocalWorkspace(context);
+            var res = this.ExecuteHgCommand(context.Repository, "log -r \"branch('default') and reverse(not(desc('Added tag ') and file(.hgtags)))\" -l1 --template \"{node}\"");
 
             if (!res.Output.Any())
                 return string.Empty;
@@ -217,104 +201,80 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             return res.Output[0];
         }
 
-        /// <summary>
-        /// Copies files and subfolders from sourceFolder to targetFolder.
-        /// </summary>
-        /// <param name="sourceFolder">A path of the folder to be copied</param>
-        /// <param name="targetFolder">A path of a folder to copy files to.  If targetFolder doesn't exist, it is created.</param>
-        private static void CopyNonHgFiles(string sourceFolder, string targetFolder)
+        public override void GetLatest(SourceControlContext context, string targetPath)
         {
-            // If the source path isn't found, there's nothing to copy
-            if (!Directory.Exists(sourceFolder))
+            this.EnsureLocalWorkspace(context);
+            this.UpdateLocalWorkspace(context);
+            this.ExportFiles(context, targetPath);
+        }
+
+        public override void GetLabeled(string label, SourceControlContext context, string targetPath)
+        {
+            if (string.IsNullOrEmpty(label)) 
+                throw new ArgumentNullException("label");
+            if (string.IsNullOrEmpty(targetPath)) 
+                throw new ArgumentNullException("targetPath");
+
+            if (context.Repository == null) 
+                throw new ArgumentException(context.ToLegacyPathString() + " does not represent a valid Mercurial path.", "context");
+
+            this.UpdateLocalWorkspace(context);
+
+            this.ExecuteHgCommand(context.Repository, "update", "-r \"" + label + "\"");
+            this.ExportFiles(context, targetPath);
+        }
+
+        public override void UpdateLocalWorkspace(SourceControlContext context)
+        {
+            if (string.IsNullOrEmpty(context.Repository.RemoteUrl))
                 return;
 
-            // If the target path doesn't exist, create it
-            if (!Directory.Exists(targetFolder))
-                Directory.CreateDirectory(targetFolder);
-
-            DirectoryInfo sourceFolderInfo = new DirectoryInfo(sourceFolder);
-            // Copy each file
-            foreach (FileInfo theFile in sourceFolderInfo.GetFiles())
-            {
-                if (theFile.Name.StartsWith(".hg")) continue;
-                theFile.CopyTo(Path.Combine(targetFolder, theFile.Name), true);
-            }
-
-            // Recurse subdirectories
-            foreach (DirectoryInfo subfolder in sourceFolderInfo.GetDirectories())
-            {
-                if (subfolder.Name.Equals(".hg")) continue;
-                CopyNonHgFiles(subfolder.FullName, Path.Combine(targetFolder, subfolder.Name));
-            }
-        }
-
-        private void UpdateLocalRepo(MercurialRepository repo, string branch)
-        {
-            if (repo.IsManagedByBuildMaster)
-                this.EnsureRepoIsPresent(repo);
-
             // pull changes if remote repository is used
-            if (!string.IsNullOrEmpty(repo.RemoteRepositoryUrl))
-                ExecuteHgCommand(repo, "pull", repo.RemoteRepositoryUrl);
+            if (!string.IsNullOrEmpty(context.Repository.RemoteUrl))
+                this.ExecuteHgCommand(context.Repository, "pull", context.Repository.RemoteUrl);
 
             // update the working repository, and do not check out the files
-            ExecuteHgCommand(repo, "update", "-C", branch);
+            this.ExecuteHgCommand(context.Repository, "update", "-C", context.Branch);
         }
 
-        private void CloneRepo(MercurialRepository repo)
+        public override void DeleteWorkspace(SourceControlContext context)
         {
-            var result = this.ExecuteHgCommand(repo, "clone", "\"" + repo.RemoteRepositoryUrl + "\"", ".");
+            this.Agent.ClearFolder(context.WorkspaceDiskPath);
+        }
+
+        public override IEnumerable<string> EnumerateLabels(SourceControlContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Clone(SourceControlContext context)
+        {
+            var result = this.ExecuteHgCommand(context.Repository, "clone", "\"" + context.Repository.RemoteUrl + "\"", ".");
             if (result.ExitCode != 0)
                 throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
         }
 
-        private ProcessResults ExecuteHgCommand(MercurialRepository repo, string hgCommand, params string[] options)
+        private ProcessResults ExecuteHgCommand(SourceRepository repo, string hgCommand, params string[] options)
         {
-            if (repo == null) 
+            if (repo == null)
                 throw new ArgumentNullException("repo");
 
-            string repositoryPath = repo.GetFullRepositoryPath(this.Agent);
+            string repositoryPath = repo.GetDiskPath(this.Agent);
 
-            if (string.IsNullOrEmpty(this.HgExecutablePath) || !File.Exists(this.HgExecutablePath)) 
+            if (string.IsNullOrEmpty(this.HgExecutablePath) || !File.Exists(this.HgExecutablePath))
                 throw new NotAvailableException("Cannot execute Mercurial command; hg executable not found at '" + this.HgExecutablePath + "' - please specify the path to this executable in the provider's configuration.");
-            if (!repo.IsManagedByBuildMaster && !this.Agent.DirectoryExists(this.Agent.CombinePath(repositoryPath, ".hg")))
+            if (!repo.IsBuildMasterManaged && !this.Agent.DirectoryExists(this.Agent.CombinePath(repositoryPath, ".hg")))
                 throw new NotAvailableException("A local repository was not found at: " + repositoryPath);
 
             var args = new StringBuilder();
             args.AppendFormat("{0} -R \"{1}\" -y -v ", hgCommand, repositoryPath);
             args.Append(string.Join(" ", (options ?? new string[0])));
 
-            return this.ExecuteCommandLine(this.HgExecutablePath, args.ToString(), repositoryPath);
-        }
-
-        /// <summary>
-        /// Returns an enumeration of file system entries without elements that start with .hg
-        /// </summary>
-        /// <typeparam name="TEntry">Type of file system entry.</typeparam>
-        /// <param name="sourceEntries">Source collection of entries to filter.</param>
-        /// <returns>Filtered file system entry collection.</returns>
-        private static IEnumerable<TEntry> FilterOutHg<TEntry>(IEnumerable<TEntry> sourceEntries)
-            where TEntry : SystemEntryInfo
-        {
-            foreach (var entry in sourceEntries)
-            {
-                if (!entry.Name.StartsWith(".hg"))
-                    yield return entry;
-            }
-        }
-
-        public MercurialRepository[] Repositories { get; set; }
-
-        RepositoryBase[] IMultipleRepositoryProvider.Repositories
-        {
-            get
-            {
-                return this.Repositories;
-            }
-            set
-            {
-                this.Repositories = Array.ConvertAll(value ?? new RepositoryBase[0], r => (MercurialRepository)r);
-            }
+            var results = this.ExecuteCommandLine(this.HgExecutablePath, args.ToString(), repositoryPath);
+            if (results.ExitCode != 0)
+                throw new InvalidOperationException(string.Join(Environment.NewLine, results.Error));
+            else
+                return results;
         }
     }
 }

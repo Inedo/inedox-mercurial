@@ -48,17 +48,13 @@ namespace Inedo.BuildMasterExtensions.Mercurial
             this.txtTagUser = new ValidatingTextBox { Width = 300, DefaultText = "Local repository default" };
 
             this.Controls.Add(
-                 new FormFieldGroup("Mercurial Username",
-                     "The username used for tagging builds.",
-                     false,
-                     new StandardFormField("Username:", this.txtTagUser)
-                     ),
-                 new FormFieldGroup("Mercurial Exe Path",
-                     "The executable path for hg (hg.exe on Windows).",
-                     false,
-                     new StandardFormField("Path:", this.txtExePath)
-                     )
-                );
+                new SlimFormField("Username for tags:", this.txtTagUser),
+                new SlimFormField("Hg command path:", this.txtExePath)
+                {
+                    HelpText = "The executable path for hg (hg.exe on Windows)."
+                }
+
+            );
         }
     }
 }
