@@ -129,10 +129,16 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         public override string ToString()
         {
-            if (Repositories.Length == 1)
-                return "Mercurial at " + Util.CoalesceStr(Repositories[0].RemoteUrl, Repositories[0].CustomDiskPath);
-            else
+            if (this.Repositories == null || this.Repositories.Length == 0)
                 return "Mercurial";
+
+            if (this.Repositories.Length == 1)
+            {
+                var repo = this.Repositories[0];
+                return "Mercurial at " + Util.CoalesceStr(SafeStripCredentialsFromUri(repo.RemoteUrl), repo.CustomDiskPath);
+            }
+            
+            return string.Format("Mercurial ({0} repositories)", this.Repositories.Length);
         }
 
         public override void ApplyLabel(string label, SourceControlContext context)
@@ -249,9 +255,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         private void Clone(SourceControlContext context)
         {
-            var result = this.ExecuteHgCommand(context.Repository, "clone", "\"" + context.Repository.RemoteUrl + "\"", ".");
-            if (result.ExitCode != 0)
-                throw new InvalidOperationException(string.Join(Environment.NewLine, result.Error.ToArray()));
+            this.ExecuteHgCommand(context.Repository, "clone", "\"" + context.Repository.RemoteUrl + "\"", ".");
         }
 
         private ProcessResults ExecuteHgCommand(SourceRepository repo, string hgCommand, params string[] options)
@@ -275,6 +279,21 @@ namespace Inedo.BuildMasterExtensions.Mercurial
                 throw new InvalidOperationException(string.Join(Environment.NewLine, results.Error));
             else
                 return results;
+        }
+
+        private static string SafeStripCredentialsFromUri(string uri)
+        {
+            try
+            {
+                var builder = new UriBuilder(uri);
+                builder.UserName = null;
+                builder.Password = null;
+                return string.Format("{0}://{1}{2}", builder.Uri.Scheme, builder.Uri.Host, builder.Uri.AbsolutePath);
+            }
+            catch
+            {
+                return uri;
+            }
         }
     }
 }
