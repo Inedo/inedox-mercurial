@@ -265,8 +265,6 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
             string repositoryPath = repo.GetDiskPath(this.Agent);
 
-            if (string.IsNullOrEmpty(this.HgExecutablePath) || !File.Exists(this.HgExecutablePath))
-                throw new NotAvailableException("Cannot execute Mercurial command; hg executable not found at '" + this.HgExecutablePath + "' - please specify the path to this executable in the provider's configuration.");
             if (!repo.IsBuildMasterManaged && !this.Agent.DirectoryExists(this.Agent.CombinePath(repositoryPath, ".hg")))
                 throw new NotAvailableException("A local repository was not found at: " + repositoryPath);
 
