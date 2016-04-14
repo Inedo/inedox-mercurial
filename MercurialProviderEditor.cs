@@ -5,9 +5,6 @@ using Inedo.Web.Controls;
 
 namespace Inedo.BuildMasterExtensions.Mercurial
 {
-    /// <summary>
-    /// Defines the common fields of a Mercurial provider editor.
-    /// </summary>
     internal sealed class MercurialProviderEditor : ProviderEditorBase
     {
         private SourceControlFileFolderPicker txtExePath;
@@ -15,17 +12,12 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         public override void BindToForm(ProviderBase extension)
         {
-            this.EnsureChildControls();
-
             var provider = (MercurialProvider)extension;
             this.txtExePath.Text = provider.HgExecutablePath;
             this.txtTagUser.Text = provider.CommittingUser;
         }
-
         public override ProviderBase CreateFromForm()
         {
-            this.EnsureChildControls();
-
             var provider = new MercurialProvider
             {
                 HgExecutablePath = this.txtExePath.Text,
@@ -44,8 +36,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
                 Required = true
             };
 
-
-            this.txtTagUser = new ValidatingTextBox { Width = 300, DefaultText = "Local repository default" };
+            this.txtTagUser = new ValidatingTextBox { DefaultText = "Local repository default" };
 
             this.Controls.Add(
                 new SlimFormField("Username for tags:", this.txtTagUser),
@@ -53,7 +44,6 @@ namespace Inedo.BuildMasterExtensions.Mercurial
                 {
                     HelpText = "The executable path for hg (hg.exe on Windows)."
                 }
-
             );
         }
     }

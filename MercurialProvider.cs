@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using Inedo.BuildMaster;
@@ -9,36 +9,23 @@ using Inedo.BuildMaster.Extensibility.Providers;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 using Inedo.BuildMaster.Files;
 using Inedo.BuildMaster.Web;
+using Inedo.Serialization;
 
 namespace Inedo.BuildMasterExtensions.Mercurial
 {
-    /// <summary>
-    /// A provider that uses Mercurial 1.4 or later.
-    /// </summary>
-    [ProviderProperties("Mercurial", "Supports Mercurial 1.4 and later; requires Mercurial to be installed.")]
+    [DisplayName("Mercurial")]
+    [Description("Supports Mercurial 1.4 and later; requires Mercurial to be installed.")]
     [CustomEditor(typeof(MercurialProviderEditor))]
     public sealed class MercurialProvider : DistributedSourceControlProviderBase
     {
-        /// <summary>
-        /// Gets or sets the path on disk to the hg executable (hg.exe on Windows)
-        /// </summary>
         [Persistent]
         public string HgExecutablePath { get; set; }
-        /// <summary>
-        /// Gets or sets the user name that will be used for committing tags
-        /// </summary>
         [Persistent]
         public string CommittingUser { get; set; }
 
-        private new IFileOperationsExecuter Agent 
-        { 
-            get { return (IFileOperationsExecuter)base.Agent.GetService<IFileOperationsExecuter>(); } 
-        }
+        public override char DirectorySeparator => '/';
 
-        public override char DirectorySeparator
-        {
-            get { return '/'; }
-        }
+        private new IFileOperationsExecuter Agent => base.Agent.GetService<IFileOperationsExecuter>();
 
         public override DirectoryEntryInfo GetDirectoryEntryInfo(string sourcePath)
         {
