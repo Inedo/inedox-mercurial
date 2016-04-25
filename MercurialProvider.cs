@@ -190,7 +190,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         public override void ExportFiles(SourceControlContext context, string targetDirectory)
         {
-            this.ExecuteHgCommand(context.Repository, "archive", "\"" + targetDirectory + "\" -X \".hg*\"");
+            this.ExecuteHgCommand(context.Repository, "archive", "\"" + targetDirectory + "\" -S -X \".hg*\"");
         }
 
         public override object GetCurrentRevision(SourceControlContext context)
