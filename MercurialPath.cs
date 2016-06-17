@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Inedo.BuildMaster.Extensibility.Agents;
+using Inedo.Agents;
 using Inedo.BuildMaster.Extensibility.Providers.SourceControl;
 
 namespace Inedo.BuildMasterExtensions.Mercurial

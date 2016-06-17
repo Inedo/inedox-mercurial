@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using Inedo.Agents;
 using Inedo.BuildMaster;
 using Inedo.BuildMaster.Extensibility.Agents;
 using Inedo.BuildMaster.Extensibility.Providers;
@@ -232,7 +233,7 @@ namespace Inedo.BuildMasterExtensions.Mercurial
 
         public override void DeleteWorkspace(SourceControlContext context)
         {
-            this.Agent.ClearFolder(context.WorkspaceDiskPath);
+            this.Agent.ClearDirectory(context.WorkspaceDiskPath);
         }
 
         public override IEnumerable<string> EnumerateLabels(SourceControlContext context)
