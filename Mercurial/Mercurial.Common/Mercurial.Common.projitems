@@ -12,6 +12,5 @@
     <Compile Include="$(MSBuildThisFileDirectory)Credentials\MercurialCredentials.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Operations\GeneralMercurialGetSourceOperation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Operations\GeneralTagOperation.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Properties\AssemblyInfo.cs" />
   </ItemGroup>
 </Project>
