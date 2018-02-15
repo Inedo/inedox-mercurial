@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,19 +18,12 @@ namespace Inedo.Extensions.Shared.Mercurial.Clients.CommandLine
         private IFileOperationsExecuter fileOps;
         private CancellationToken cancellationToken;
 
-        public MercurialCommandLineClient(string hgExePath, IRemoteProcessExecuter processExecuter, IFileOperationsExecuter fileOps, MercurialRepositoryInfo repository, ILogger log, CancellationToken cancellationToken)
+        public MercurialCommandLineClient(string hgExePath, IRemoteProcessExecuter processExecuter, IFileOperationsExecuter fileOps, MercurialRepositoryInfo repository, ILogSink log, CancellationToken cancellationToken)
             : base(repository, log)
         {
-            if (hgExePath == null)
-                throw new ArgumentNullException(nameof(hgExePath));
-            if (processExecuter == null)
-                throw new ArgumentNullException(nameof(processExecuter));
-            if (fileOps == null)
-                throw new ArgumentNullException(nameof(fileOps));
-
-            this.hgExePath = hgExePath;
-            this.processExecuter = processExecuter;
-            this.fileOps = fileOps;
+            this.hgExePath = hgExePath ?? throw new ArgumentNullException(nameof(hgExePath));
+            this.processExecuter = processExecuter ?? throw new ArgumentNullException(nameof(processExecuter));
+            this.fileOps = fileOps ?? throw new ArgumentNullException(nameof(fileOps));
             this.cancellationToken = cancellationToken;
         }
 
@@ -85,11 +77,7 @@ namespace Inedo.Extensions.Shared.Mercurial.Clients.CommandLine
             }
             else
             {
-#if BuildMaster
-                args.Append("BuildMaster");
-#elif Otter
-                args.Append("Otter");
-#endif
+                args.Append(SDK.ProductName);
             }
             args.Append("-f");
             args.Append(tag);

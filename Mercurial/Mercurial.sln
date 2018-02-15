@@ -1,40 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.3
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Mercurial.Common", "Mercurial.Common\Mercurial.Common.shproj", "{98887451-9856-4D8C-91C2-BF59B55D0165}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mercurial.BuildMasterExtension", "Mercurial.BuildMasterExtension\Mercurial.BuildMasterExtension.csproj", "{5F596A6C-D737-48CA-9546-667F1E7C5F4F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mercurial.OtterExtension", "Mercurial.OtterExtension\Mercurial.OtterExtension.csproj", "{E29F4F93-DAA7-4C11-907E-45D0CB59FCF6}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shproj", "{DA0B7873-C8CC-4387-99F6-0705F5740E83}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InedoExtension", "InedoExtension\InedoExtension.csproj", "{17449CA1-E68A-473E-B485-7B0F40E478F8}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Common\Common.projitems*{5f596a6c-d737-48ca-9546-667f1e7c5f4f}*SharedItemsImports = 4
-		Mercurial.Common\Mercurial.Common.projitems*{5f596a6c-d737-48ca-9546-667f1e7c5f4f}*SharedItemsImports = 4
-		Mercurial.Common\Mercurial.Common.projitems*{98887451-9856-4d8c-91c2-bf59b55d0165}*SharedItemsImports = 13
-		Common\Common.projitems*{da0b7873-c8cc-4387-99f6-0705f5740e83}*SharedItemsImports = 13
-		Common\Common.projitems*{e29f4f93-daa7-4c11-907e-45d0cb59fcf6}*SharedItemsImports = 4
-		Mercurial.Common\Mercurial.Common.projitems*{e29f4f93-daa7-4c11-907e-45d0cb59fcf6}*SharedItemsImports = 4
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5F596A6C-D737-48CA-9546-667F1E7C5F4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5F596A6C-D737-48CA-9546-667F1E7C5F4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5F596A6C-D737-48CA-9546-667F1E7C5F4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5F596A6C-D737-48CA-9546-667F1E7C5F4F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E29F4F93-DAA7-4C11-907E-45D0CB59FCF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E29F4F93-DAA7-4C11-907E-45D0CB59FCF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E29F4F93-DAA7-4C11-907E-45D0CB59FCF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E29F4F93-DAA7-4C11-907E-45D0CB59FCF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17449CA1-E68A-473E-B485-7B0F40E478F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17449CA1-E68A-473E-B485-7B0F40E478F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17449CA1-E68A-473E-B485-7B0F40E478F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17449CA1-E68A-473E-B485-7B0F40E478F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0B80288D-A365-4236-821D-BB1570B6A762}
 	EndGlobalSection
 EndGlobal

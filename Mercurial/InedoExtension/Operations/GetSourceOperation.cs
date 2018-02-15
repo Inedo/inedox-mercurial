@@ -1,25 +1,31 @@
-﻿#if BuildMaster
-using Inedo.BuildMaster.Extensibility;
-using Inedo.BuildMaster.Extensibility.Credentials;
-using Inedo.BuildMaster.Extensibility.Operations;
-using Inedo.BuildMaster.Web.Controls.Plans;
-#elif Otter
-using Inedo.Otter.Extensibility;
-using Inedo.Otter.Extensibility.Credentials;
-using Inedo.Otter.Extensibility.Operations;
-using Inedo.Otter.Web.Controls.Plans;
-#endif
+﻿using System.ComponentModel;
+using System.Threading.Tasks;
 using Inedo.Agents;
 using Inedo.Diagnostics;
 using Inedo.Documentation;
+using Inedo.Extensibility;
+using Inedo.Extensibility.Credentials;
+using Inedo.Extensibility.Operations;
+using Inedo.Extensions.Mercurial.Credentials;
 using Inedo.Extensions.Shared.Mercurial.Clients;
-using Inedo.Extensions.Shared.Mercurial.Credentials;
-using System.ComponentModel;
-using System.Threading.Tasks;
+using Inedo.Web.Plans.ArgumentEditors;
 
-namespace Inedo.Extensions.Shared.Mercurial.Operations
+namespace Inedo.Extensions.Mercurial.Operations
 {
-    public abstract class GetSourceOperation<TCredentials> : MercurialOperation<TCredentials> where TCredentials : MercurialCredentials, new()
+    [DisplayName("Get Source from Mercurial Repository")]
+    [Description("Gets the source code from a general Mercurial repository.")]
+    [Tag("source-control")]
+    [ScriptAlias("Hg-GetSource")]
+    [ScriptNamespace("Mercurial", PreferUnqualified = true)]
+    [Example(@"
+# pulls source from a remote repository and archives/exports the contents to a target directory
+Hg-GetSource(
+    Credentials: Hdars-Mercurial,
+    RepositoryUrl: https://www.selenic.com/repo/hello,
+    DiskPath: ~\Sources
+);
+")]
+    public sealed class GetSourceOperation : MercurialOperation
     {
         [ScriptAlias("Credentials")]
         [DisplayName("Credentials")]
@@ -47,7 +53,7 @@ namespace Inedo.Extensions.Shared.Mercurial.Operations
 
         public override async Task ExecuteAsync(IOperationExecutionContext context)
         {
-            string repositoryUrl = await this.GetRepositoryUrlAsync().ConfigureAwait(false);
+            var repositoryUrl = this.RepositoryUrl;
             if (string.IsNullOrEmpty(repositoryUrl))
             {
                 this.LogError("RepositoryUrl is not specified. It must be included in either the referenced credential or in the RepositoryUrl argument of the operation.");
@@ -90,11 +96,6 @@ namespace Inedo.Extensions.Shared.Mercurial.Operations
             await client.ArchiveAsync(context.ResolvePath(this.DiskPath)).ConfigureAwait(false);
 
             this.LogInformation("Get source complete.");
-        }
-
-        protected virtual Task<string> GetRepositoryUrlAsync()
-        {
-            return Task.FromResult(this.RepositoryUrl);
         }
 
         protected override ExtendedRichDescription GetDescription(IOperationConfiguration config)

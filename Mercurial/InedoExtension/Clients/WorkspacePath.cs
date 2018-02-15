@@ -1,13 +1,9 @@
-﻿#if BuildMaster
-using Inedo.BuildMaster.Extensibility.Operations;
-#elif Otter
-using Inedo.Otter.Extensibility.Operations;
-#endif
-using Inedo.Agents;
-using Inedo.IO;
-using System;
+﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using Inedo.Agents;
+using Inedo.Extensibility.Operations;
+using Inedo.IO;
 
 namespace Inedo.Extensions.Shared.Mercurial.Clients
 {

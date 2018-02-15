@@ -1,26 +1,21 @@
-﻿using Inedo.Agents;
-using Inedo.Diagnostics;
-using Inedo.IO;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Inedo.Agents;
+using Inedo.Diagnostics;
+using Inedo.IO;
 
 namespace Inedo.Extensions.Shared.Mercurial.Clients
 {
     public abstract class MercurialClient
     {
-        protected ILogger log;
+        protected ILogSink log;
         protected MercurialRepositoryInfo repository;
 
-        protected MercurialClient(MercurialRepositoryInfo repository, ILogger log)
+        protected MercurialClient(MercurialRepositoryInfo repository, ILogSink log)
         {
-            if (repository == null)
-                throw new ArgumentNullException(nameof(repository));
-            if (log == null)
-                throw new ArgumentNullException(nameof(log));
-
-            this.repository = repository;
-            this.log = log;
+            this.repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            this.log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         public abstract Task<bool> IsRepositoryValidAsync();

@@ -1,25 +1,23 @@
-﻿#if BuildMaster
-using Inedo.BuildMaster.Extensibility;
-using Inedo.BuildMaster.Extensibility.Credentials;
-using Inedo.BuildMaster.Extensibility.Operations;
-#elif Otter
-using Inedo.Otter.Extensibility;
-using Inedo.Otter.Extensibility.Credentials;
-using Inedo.Otter.Extensibility.Operations;
-#endif
+﻿using System.ComponentModel;
+using System.Security;
 using Inedo.Agents;
 using Inedo.Diagnostics;
 using Inedo.Documentation;
+using Inedo.Extensibility;
+using Inedo.Extensibility.Credentials;
+using Inedo.Extensibility.Operations;
+using Inedo.Extensions.Mercurial.Credentials;
 using Inedo.Extensions.Shared.Mercurial.Clients;
 using Inedo.Extensions.Shared.Mercurial.Clients.CommandLine;
-using Inedo.Extensions.Shared.Mercurial.Credentials;
-using System.ComponentModel;
-using System.Security;
 
-namespace Inedo.Extensions.Shared.Mercurial.Operations
+namespace Inedo.Extensions.Mercurial.Operations
 {
-    public abstract class MercurialOperation<TCredentials> : ExecuteOperation, IHasCredentials<TCredentials> where TCredentials : MercurialCredentials, new()
+    public abstract class MercurialOperation : ExecuteOperation, IHasCredentials<MercurialCredentials>
     {
+        private protected MercurialOperation()
+        {
+        }
+
         public abstract string CredentialName { get; set; }
 
         [Category("Connection/Identity")]

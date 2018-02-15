@@ -11,8 +11,8 @@ namespace Inedo.Extensions.Shared.Mercurial.Clients.CommandLine
             this.Error = error;
         }
 
-        public int ExitCode { get; private set; }
-        public IList<string> Output { get; private set; }
-        public IList<string> Error { get; private set; }
+        public int ExitCode { get; }
+        public IList<string> Output { get; }
+        public IList<string> Error { get; }
     }
 }
