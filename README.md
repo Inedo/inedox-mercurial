@@ -1,6 +1,6 @@
 # inedox-mercurial
 
-[![Build status](https://ci.appveyor.com/api/projects/status/m78ay0faq7lcykx1/branch/master?svg=true)](https://ci.appveyor.com/project/Inedo/inedox-mercurial/branch/master)
+[![Build status](https://buildmaster.inedo.com/api/ci-badges/image?API_Key=badges&$ApplicationId=31)](https://buildmaster.inedo.com/api/ci-badges/link?API_Key=badges&$ApplicationId=31)
 
 Source control integration for Mercurial.
 
